@@ -1,5 +1,7 @@
 package com.learning.random;
 
+import ch.qos.logback.core.joran.sanity.Pair;
+
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Function;
@@ -9,40 +11,118 @@ import java.util.stream.Stream;
 
 public class Client {
 
-    public static void main(String[] args) {
-        Stream<Integer> intStream = Stream.of(1,2,3,4,5,6,7);
-        Map<Boolean, List<Integer>> map = intStream.collect(Collectors.partitioningBy(x -> (x > 4 && x % 2 == 0)));
-        System.out.println(map.get(true));
-        System.out.println(map.get(false));
-        String str = "abcdefghijklmnopqrstuvwxyz";
-
-        //Example2
-        Map<Boolean, List<Character>> map2 = str.chars()
-                .mapToObj(x -> (char)x)
-                .collect(Collectors.partitioningBy(x -> x.equals('a') || x.equals('e') || x.equals('i') || x.equals('o') || x.equals('u')));
-        System.out.println(map2.get(true));
-        System.out.println(map2.get(false));
-
-        //Frequency of elements in an array
-        int[] nums = {1,1,4,4,4,2,3,11,9,19,10,11,5,4,4,3,3,1,2,9};
-        List<Integer> list = new ArrayList<>(Arrays.asList(1,1,4,4,4,2,3,11,9,19,10,11,5,4,4,3,3,1,2,9));
-        List<Integer> distinctList = Arrays.stream(nums).distinct().boxed().collect(Collectors.toList());
-        List<Integer> distinctArraylist = list.stream().distinct().collect(Collectors.toList());
-        System.out.println(distinctList);
-        System.out.println(distinctArraylist);
-
-//        Map<Integer, Long> mapFreq = list.stream()
-//                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-//
-//        for(Integer num : mapFreq.keySet()) {
-//            System.out.println(num + " " + mapFreq.get(num));
-//        }
-
-        Map<Character, Long> mapString = str.chars()
-                .mapToObj(x -> (char)x)
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-        for(Character ch : mapString.keySet()) {
-            System.out.println(ch + " " + mapString.get(ch));
+    public static class Pair {
+        int element;
+        int frequency;
+        public Pair(int element, int frequency) {
+            this.element = element;
+            this.frequency = frequency;
         }
+    }
+
+    public static List<List<Integer>> generateQueries() {
+        List<List<Integer>> nums = new ArrayList<>();
+        nums.add(new ArrayList<>());
+        nums.get(0).add(1);
+        nums.get(0).add(1);
+        nums.add(new ArrayList<>());
+        nums.get(1).add(1);
+        nums.get(1).add(1);
+        nums.add(new ArrayList<>());
+        nums.get(2).add(1);
+        nums.get(2).add(2);
+        nums.add(new ArrayList<>());
+        nums.get(3).add(1);
+        nums.get(3).add(6);
+        nums.add(new ArrayList<>());
+        nums.get(4).add(1);
+        nums.get(4).add(7);
+        nums.add(new ArrayList<>());
+        nums.get(5).add(1);
+        nums.get(5).add(3);
+        nums.add(new ArrayList<>());
+        nums.get(6).add(1);
+        nums.get(6).add(2);
+        nums.add(new ArrayList<>());
+        nums.get(7).add(1);
+        nums.get(7).add(2);
+        nums.add(new ArrayList<>());
+        nums.get(8).add(1);
+        nums.get(8).add(5);
+        nums.add(new ArrayList<>());
+        nums.get(9).add(1);
+        nums.get(9).add(9);
+        nums.add(new ArrayList<>());
+        nums.get(10).add(1);
+        nums.get(10).add(1);
+        nums.add(new ArrayList<>());
+        nums.get(11).add(1);
+        nums.get(11).add(5);
+        nums.add(new ArrayList<>());
+        nums.get(12).add(1);
+        nums.get(12).add(6);
+        nums.add(new ArrayList<>());
+        nums.get(13).add(1);
+        nums.get(13).add(2);
+        nums.add(new ArrayList<>());
+        nums.get(14).add(1);
+        nums.get(14).add(1);
+        nums.add(new ArrayList<>());
+        nums.get(15).add(2);
+        nums.get(15).add(-1);
+        nums.add(new ArrayList<>());
+        nums.get(16).add(2);
+        nums.get(16).add(-1);
+        nums.add(new ArrayList<>());
+        nums.get(17).add(2);
+        nums.get(17).add(-1);
+        nums.add(new ArrayList<>());
+        nums.get(18).add(2);
+        nums.get(18).add(-1);
+        return nums;
+    }
+
+    public static Comparator<Pair> customComparator() {
+        return new Comparator<Pair>() {
+            @Override
+            public int compare(Pair pair1, Pair pair2) {
+                if(pair1.frequency == pair2.frequency) {
+                    return pair1.frequency - pair2.frequency;
+                }
+                return pair2.frequency - pair1.frequency;
+            }
+        };
+    }
+
+    public static List<Integer> getRemovedElements(List<List<Integer>> queries) {
+        List<Integer> result = new ArrayList<>();
+        HashMap<Integer, Integer> map = new HashMap<>();
+        PriorityQueue<Pair> pqueue = new PriorityQueue<>(customComparator());
+        for(List<Integer> query : queries) {
+            int operation = query.get(0);
+            if(operation == 1) {
+                int element = query.get(1);
+                map.put(element, map.getOrDefault(element, 0) + 1);
+                int frequency = map.get(element);
+                pqueue.add(new Pair(element, frequency));
+            }
+            else {
+                int exitElement = pqueue.poll().element;
+                if(map.get(exitElement) == 1) {
+                    map.remove(exitElement);
+                }
+                else {
+                    map.put(exitElement, map.get(exitElement) - 1);
+                }
+                result.add(exitElement);
+            }
+        }
+        return result;
+    }
+    public static void main(String[] args) {
+        List<List<Integer>> queries = generateQueries();
+        System.out.println(getRemovedElements(queries));
+        // 1,1,2,6,7,3,2,2,5,9,1,5,6,2,1
+        //1-4, 2-4, 3-1, 5-2, 6-2, 7-1, 9-1
     }
 }
