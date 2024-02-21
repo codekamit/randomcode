@@ -9,6 +9,8 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toMap;
+
 public class Client {
 
     public static class Pair {
@@ -119,10 +121,98 @@ public class Client {
         }
         return result;
     }
+
+    public static Integer getDigitArray(int num) {
+        return String
+                .valueOf(num)
+                .chars()
+                .mapToObj(x -> Character.getNumericValue((char)x))
+                .reduce(0, (a,b) -> a > b ? a : b);
+    }
+
+    public static List<List<Integer>> seperateOddandEvenDigits(int num) {
+        Map<Boolean, List<Integer>> map = String.valueOf(num)
+                .chars()
+                .mapToObj(x -> Character.getNumericValue((char)x))
+                .collect(Collectors.partitioningBy(x -> x % 2 == 0));
+        List<List<Integer>> result = new ArrayList<>();
+        result.add(map.get(true));
+        result.add(map.get(false));
+        return result;
+    }
+
+    public static Map<Character, Long> getFrequencyOfDigits(String number) {
+        return number
+                .chars()
+                .mapToObj(x -> (char)x)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+    }
+
+    public static List<Integer> getDistinctDigits(String number) {
+        return number
+                .chars()
+                .mapToObj(x -> Character.getNumericValue((char)x))
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    public static List<Integer> sortedDigitsInReverse(String number) {
+        return number
+                .chars()
+                .mapToObj(x -> Character.getNumericValue((char)x))
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.toList());
+    }
+
+    public static String getStringFromCharArray(List<Character> chars) {
+//        return chars.stream().map(x -> String.valueOf(x)).collect(Collectors.joining());
+        return chars.stream().map(x -> String.valueOf(x)).reduce("", (a, b) -> String.valueOf(a) + String.valueOf(b));
+    }
+
+    public static Map<String, String> extractPropertiesFromURL(String url) {
+        int right = 0;
+        while(right < url.length()) {
+            if(url.charAt(right) == '?') {
+                right = right + 1;
+                break;
+            }
+            right++;
+        }
+        String str = url.substring(right, url.length());
+        return Stream.of(str.split("&"))
+                .map(x -> x.split("="))
+                .collect(toMap(x -> x[0], x -> x[1]));
+    }
+
+    public static Map<String, String> arrayToMap(String[] arrayOfString) {
+        return Arrays.asList(arrayOfString)
+                .stream()
+                .map(str -> str.split(":"))
+                .collect(toMap(str -> str[0], str -> str[1]));
+    }
+
+    public static Map<String, String> extractPropsFromURL(String url) {
+        return Stream.of(url.split("\\?")[1].split("&"))
+                .map(x -> x.split("="))
+                .collect(toMap(x -> x[0], x -> x[1]));
+    }
+
+    public static List<String> extractUsernameAndDomainFromEmail(String email) {
+        return Stream.of(email.split("@"))
+                .collect(Collectors.toList());
+    }
+
+    public static void printMap(Map<String, String> map) {
+        for(String str : map.keySet()) {
+            System.out.println(str + " : " + map.get(str));
+        }
+    }
+
     public static void main(String[] args) {
-        List<List<Integer>> queries = generateQueries();
-        System.out.println(getRemovedElements(queries));
-        // 1,1,2,6,7,3,2,2,5,9,1,5,6,2,1
-        //1-4, 2-4, 3-1, 5-2, 6-2, 7-1, 9-1
+        String url = "https://www.example.com/messages?token=jhg334jgh345hjg345j&name=kamitstar&age=32&email=kamitstar@icloud.com";
+//        System.out.println(Stream.of('a', 'b'));
+//        Map<String, String> map = Stream.of(url.split("\\?")[1].split("&"))
+//                .map(x -> x.split("="))
+//                .collect(toMap(x -> x[0], x -> x[1]));
     }
 }
