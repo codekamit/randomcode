@@ -2,13 +2,20 @@ package com.learning.random;
 
 import ch.qos.logback.core.joran.sanity.Pair;
 
+import javax.crypto.spec.PSource;
+import javax.sound.midi.SysexMessage;
 import java.lang.reflect.Type;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.toMap;
 
 public class Client {
@@ -20,68 +27,6 @@ public class Client {
             this.element = element;
             this.frequency = frequency;
         }
-    }
-
-    public static List<List<Integer>> generateQueries() {
-        List<List<Integer>> nums = new ArrayList<>();
-        nums.add(new ArrayList<>());
-        nums.get(0).add(1);
-        nums.get(0).add(1);
-        nums.add(new ArrayList<>());
-        nums.get(1).add(1);
-        nums.get(1).add(1);
-        nums.add(new ArrayList<>());
-        nums.get(2).add(1);
-        nums.get(2).add(2);
-        nums.add(new ArrayList<>());
-        nums.get(3).add(1);
-        nums.get(3).add(6);
-        nums.add(new ArrayList<>());
-        nums.get(4).add(1);
-        nums.get(4).add(7);
-        nums.add(new ArrayList<>());
-        nums.get(5).add(1);
-        nums.get(5).add(3);
-        nums.add(new ArrayList<>());
-        nums.get(6).add(1);
-        nums.get(6).add(2);
-        nums.add(new ArrayList<>());
-        nums.get(7).add(1);
-        nums.get(7).add(2);
-        nums.add(new ArrayList<>());
-        nums.get(8).add(1);
-        nums.get(8).add(5);
-        nums.add(new ArrayList<>());
-        nums.get(9).add(1);
-        nums.get(9).add(9);
-        nums.add(new ArrayList<>());
-        nums.get(10).add(1);
-        nums.get(10).add(1);
-        nums.add(new ArrayList<>());
-        nums.get(11).add(1);
-        nums.get(11).add(5);
-        nums.add(new ArrayList<>());
-        nums.get(12).add(1);
-        nums.get(12).add(6);
-        nums.add(new ArrayList<>());
-        nums.get(13).add(1);
-        nums.get(13).add(2);
-        nums.add(new ArrayList<>());
-        nums.get(14).add(1);
-        nums.get(14).add(1);
-        nums.add(new ArrayList<>());
-        nums.get(15).add(2);
-        nums.get(15).add(-1);
-        nums.add(new ArrayList<>());
-        nums.get(16).add(2);
-        nums.get(16).add(-1);
-        nums.add(new ArrayList<>());
-        nums.get(17).add(2);
-        nums.get(17).add(-1);
-        nums.add(new ArrayList<>());
-        nums.get(18).add(2);
-        nums.get(18).add(-1);
-        return nums;
     }
 
     public static Comparator<Pair> customComparator() {
@@ -208,11 +153,288 @@ public class Client {
         }
     }
 
+    public static String joinStringArray(List<String> strList) {
+        return strList.stream()
+                .collect(Collectors.joining(":", "[", "]"));
+    }
+
+    public static List<Integer> sortList(int[] nums) {
+        return Arrays.stream(nums)
+                .boxed()
+                .sorted(Comparator.reverseOrder())
+                .collect(Collectors.toList());
+    }
+
+    public static List<Character> getCharArrayFromString(String str) {
+        Map<Character, Long> map = str
+                .chars()
+                .mapToObj(x -> (char)x)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        return str.chars().mapToObj(x -> (char)x).collect(Collectors.toList());
+    }
+
+    public static int[] nextGreaterElement(int[] arr, int n) {
+        int[] result = new int[arr.length];
+        Stack<Integer> stk = new Stack<>();
+        for(int idx = n - 1; idx >= 0; idx--) {
+            int curr = arr[idx];
+            if(stk.isEmpty()) {
+                stk.push(curr);
+                result[idx] = -1;
+            }
+            else {
+                if(curr >= stk.peek()) {
+                    while(!stk.isEmpty() && curr >= stk.peek()) {
+                        stk.pop();
+                    }
+                    if(stk.isEmpty()) {
+                        idx = idx + 1;
+                    }
+                    else {
+                        result[idx] = stk.peek();
+                        stk.push(curr);
+                    }
+                }
+                else {
+                    result[idx] = stk.peek();
+                    stk.push(curr);
+                }
+            }
+        }
+        return result;
+    }
+
+    public static boolean checkIfArmstrongNumber(String num) {
+        int value = num.chars()
+                .mapToObj(x -> (char)x)
+                .map(x -> Integer.parseInt(String.valueOf(x)))
+                .map(x -> (int)Math.pow(x, 3))
+                .reduce(0, (a, b) -> a + b);
+        return String.valueOf(value).equals(num);
+    }
+
+    public static List<Integer> findAllNumbersStartingWithOne(List<Integer> nums) {
+        return nums.stream()
+                .map(x -> String.valueOf(x))
+                .filter(x -> x.startsWith("1"))
+                .map(x -> Integer.parseInt(x))
+                .collect(Collectors.toList());
+    }
+
+    public static List<Integer> findDuplicateElements(List<Integer> nums) {
+        return nums.stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .filter(x -> x.getValue() > 1)
+                .map(x -> x.getKey())
+                .collect(Collectors.toList());
+    }
+
+    public static Integer findFirstElementInList(List<Integer> nums) {
+        return nums.stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    public static Long findTotalElementsInList(List<Integer> nums) {
+        return nums.stream().count();
+    }
+
+    public static int findMaxValueInList(List<Integer> nums) {
+//        return nums.stream().reduce(0, (a, b) -> a > b ? a : b);
+        return nums.stream()
+                .collect(Collectors.summarizingInt(Integer::intValue))
+                .getMax();
+    }
+
+    public static Character findFirstNonRepeatingCharacter(String str) {
+        return str.chars()
+                .mapToObj(x -> (char)x)
+                .collect(Collectors.groupingBy(Function.identity(), LinkedHashMap::new, counting()))
+                .entrySet()
+                .stream()
+                .filter(x -> x.getValue() > 1L)
+                .map(x -> x.getKey())
+                .findFirst()
+                .orElse(null);
+    }
+
+    public static boolean findIfListContainsDuplicates(List<Integer> nums) {
+        return nums.stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                .entrySet()
+                .stream()
+                .map(x -> x.getValue() > 1 ? true : false)
+                .reduce(false, (a, b) -> a || b);
+    }
+
+    public static void testConcurrency(Map<String, String> languageMap) {
+        languageMap.put("Maaike", "Java");
+        languageMap.put("Seán", "C#");
+        for (String key : languageMap.keySet()) {
+            System.out.println(key + " loves coding");
+            languageMap.remove(key);
+        }
+    }
+
+    public static void testConcurrency(ConcurrentMap<String, String> languageMap) {
+        languageMap.put("Maaike", "Java");
+        languageMap.put("Seán", "C#");
+        for (String key : languageMap.keySet()) {
+            System.out.println(key + " loves coding");
+            languageMap.remove(key);
+        }
+    }
+
+    public static void testConcurrency(ArrayList<Integer> nums) {
+        for(int num : nums) {
+            nums.remove(0);
+        }
+    }
+
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static Future<Integer> getVotes(int voteId) {
+        return executorService.submit(() -> {
+            Thread.sleep(1000);
+            System.out.println("Vote Id : "+voteId+ "; Printed by : "+Thread.currentThread().getName());
+            return voteId;
+        });
+    }
+
+    public static void recersive(String str, int index, HashSet<Integer> map, List<String> result, StringBuilder sb) {
+        if(index == str.length()) {
+            result.add(sb.toString());
+            return;
+        }
+        for(int idx = 0; idx < str.length(); idx++) {
+            if(!map.contains(idx)) {
+                sb.append(str.charAt(idx));
+                map.add(idx);
+                recersive(str, index + 1, map, result, sb);
+                sb.deleteCharAt(sb.length() - 1);
+                map.remove(idx);
+            }
+        }
+    }
+
+    private static void swap(char[] chars, int first, int second) {
+        char temp = chars[first];
+        chars[first] = chars[second];
+        chars[second] = temp;
+    }
+
+    public static String generateStringFromCharArray(char[] chars) {
+        StringBuilder sb = new StringBuilder();
+        for(int idx = 0; idx < chars.length; idx++) {
+            sb.append(chars[idx]);
+        }
+        return sb.toString();
+    }
+    public static void recursiveNoSpace(char[] chars, int index, List<String> result) {
+        if(index == chars.length) {
+            String str = generateStringFromCharArray(chars);
+            result.add(str);
+            return;
+        }
+
+        for(int idx = index; idx < chars.length; idx++) {
+            swap(chars, index, idx);
+            recursiveNoSpace(chars, index + 1, result);
+            swap(chars, index, idx);
+        }
+    }
+
+    public static List<String> allStringPermutations(String str) {
+        List<String> result = new ArrayList<>();
+        char[] chars = str.toCharArray();
+        recursiveNoSpace(chars, 0, result);
+        return result;
+    }
+
+    public static String reverseWordsInString(String str) {
+        List<String> list = Stream.of(str.split(" ")).collect(Collectors.toList());
+        String reversedString = IntStream.rangeClosed(1, list.size())
+                .boxed()
+                .map(x -> list.get(list.size() - x))
+                .collect(Collectors.joining(" "));
+        System.out.println(reversedString);
+        return reversedString;
+    }
+
+
+
+
+
+
+
+    private static String getSubstring(String str, int startIdx, int endIdx) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("");
+        for(int idx = startIdx; idx <= endIdx; idx++) {
+            sb.append(str.charAt(idx));
+        }
+        return sb.toString();
+    }
+
+
+    public static String reverseWords(String str) {
+        //"  This is a good   weather"
+        int right = str.length() - 1;
+        int left = str.length() - 1;
+        StringBuilder sb = new StringBuilder();
+        while(left >= 0) {
+            //Check for space at the end
+            while(str.charAt(left) == ' ') {
+                left--;
+            }
+            //Adding trailing space
+            sb.append(getSubstring(str, left + 1, right));
+            right = left;
+            while(str.charAt(left) != ' ') {
+                left--;
+            }
+            //Adding words
+            sb.append(getSubstring(str, left + 1, right));
+            if(left < 0) {
+                break;
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String reversedAgain(String str) {
+        StringBuilder sb = new StringBuilder();
+        int left = str.length() - 1;
+        int right = str.length() - 1;
+        while(str.charAt(left) == ' ') {
+            left--;
+        }
+        right = left;
+
+        while(left >= 0) {
+            while(left >= 0 && str.charAt(left) != ' ') {
+                left--;
+            }
+            sb.append(str.substring(left + 1, right + 1));
+            if(left < 0) {
+                break;
+            }
+            right  = left;
+            while(left >= 0 && str.charAt(left) == ' ') {
+                left--;
+            }
+            if(left < 0) {
+                break;
+            }
+            sb.append(str.substring(left + 1, right + 1));
+            right = left;
+        }
+        return sb.toString();
+    }
+
+
     public static void main(String[] args) {
-        String url = "https://www.example.com/messages?token=jhg334jgh345hjg345j&name=kamitstar&age=32&email=kamitstar@icloud.com";
-//        System.out.println(Stream.of('a', 'b'));
-//        Map<String, String> map = Stream.of(url.split("\\?")[1].split("&"))
-//                .map(x -> x.split("="))
-//                .collect(toMap(x -> x[0], x -> x[1]));
+        System.out.println(reversedAgain("This is called the most     ultimate   man      "));
     }
 }
